@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: $CI_PROJECT_NAME
+    sha: $CI_COMMIT_SHA
+  name: $CI_PROJECT_NAME
+  namespace: $KUBE_NAMESPACE
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: $CI_PROJECT_NAME
+  template:
+    metadata:
+      labels:
+        app: $CI_PROJECT_NAME
+        sha: $CI_COMMIT_SHA
+    spec:
+      containers:
+      - envFrom:
+        - configMapRef:
+            name: $CI_PROJECT_NAME
+        image:  $KUBE_IMAGE_PULL
+        imagePullPolicy: Always
+        name: $CI_PROJECT_NAME
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+      imagePullSecrets:
+      - name: $KUBE_IMAGE_PULL_SECRET
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: $CI_PROJECT_NAME
+  namespace: $KUBE_NAMESPACE
+spec:
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: $CI_PROJECT_NAME
+  type: ClusterIP
