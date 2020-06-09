@@ -57,16 +57,16 @@ class FileController extends Controller
                         // Put vào folder Upload luôn
                         $content = file_get_contents($file->getRealPath());
                         $url = 'uploads'.('/' . date('Y') . '/' . date('m') . '/' . date('d')).'/'.$new_name;
-                        Storage::disk('s3')->put($url, $content,'public');
+                        Storage::disk(config('filesystems.cloud'))->put($url, $content,'public');
                         return response()->json([
                             'status' => 'success',
-                            'url' => 'https://imapcdn.sgp1.digitaloceanspaces.com/'.$url,
+                            'url' => config('filesystems.disks.s3.url'). '/'.$url,
                         ], 201);
 
                     }else{
                         // Put vào folder tmp, cần gọi hàm formalize để chuyển từ folder tmp sang upload
                         $content = file_get_contents($file->getRealPath());
-                        Storage::disk('s3')->put('tmp/'.$new_name, $content,'public');
+                        Storage::disk(config('filesystems.cloud'))->put('tmp/'.$new_name, $content,'public');
 
                         // Dạng return này liên quan đến thư viện upload phía Client - filepond
                         echo 'uploads'.('/' . date('Y') . '/' . date('m') . '/' . date('d')).'/'.$new_name;
@@ -102,9 +102,9 @@ class FileController extends Controller
         $res = [];
         foreach ($files as $file_path){
             $file_path_now = 'tmp'.substr($file_path,strrpos($file_path,'/')); // tmp/a.pdf
-            $exists = Storage::disk('s3')->exists($file_path_now);
+            $exists = Storage::disk(config('filesystems.cloud'))->exists($file_path_now);
             if ($exists){
-                Storage::disk('s3')->move($file_path_now, $file_path);
+                Storage::disk(Config::get('cloud'))->move($file_path_now, $file_path);
                 $res[] = true;
             }else{
                 $res[] = false;
@@ -112,7 +112,7 @@ class FileController extends Controller
         }
         return response()->json([
             'status' => 'success',
-            'domain' => 'https://imapcdn.sgp1.digitaloceanspaces.com',
+            'domain' => config('filesystems.disks.s3.url'),
             'message' => $res,
         ], 201);
     }
@@ -121,6 +121,6 @@ class FileController extends Controller
      * Xóa file trong folder TMP
      */
     public function revert(){
-        Storage::disk('s3')->delete(str_replace("uploads/","tmp/",file_get_contents('php://input')));
+        Storage::disk(config('filesystems.cloud'))->delete(str_replace("uploads/","tmp/",file_get_contents('php://input')));
     }
 }

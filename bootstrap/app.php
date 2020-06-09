@@ -60,7 +60,7 @@ $app->singleton(
 */
 
 $app->configure('app');
-
+$app->configure('filesystems');
 /*
 |--------------------------------------------------------------------------
 | Register Middleware
