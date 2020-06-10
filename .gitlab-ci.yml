@@ -1,0 +1,41 @@
+build-image:
+  image: docker:19
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  # Use this if your GitLab runner does not use socket binding
+  services:
+    - name: docker:19-dind
+  stage: build
+  before_script:
+    - echo -n $CI_JOB_TOKEN | docker login -u gitlab-ci-token --password-stdin $CI_REGISTRY
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE::$CI_COMMIT_REF_NAME --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME -f $CI_PROJECT_DIR/deploy/Dockerfile .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+  only:
+    - staging
+    - master
+deploy-app:
+  stage: deploy
+  image: alpine
+  only:
+    - staging
+    - master
+  script:
+    - apk add --no-cache curl gettext
+    - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+    - chmod +x ./kubectl
+    - mv ./kubectl /usr/local/bin/kubectl
+    - KUBE_IMAGE_PULL="${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}"
+    - KUBE_IMAGE_PULL_SECRET="private-registry-${CI_PROJECT_NAMESPACE}"
+    - export KUBE_IMAGE_PULL KUBE_IMAGE_PULL_SECRET
+    - kubectl config set-cluster gitlab-deploy --server="$KUBE_URL" --insecure-skip-tls-verify=true
+    - kubectl config set-credentials gitlab-deploy --token="$KUBE_TOKEN"
+    - kubectl config set-context gitlab-deploy --cluster=gitlab-deploy --user=gitlab-deploy
+    - kubectl config use-context gitlab-deploy
+    - envsubst < deploy/deployment.yaml | kubectl apply -f -
+  environment:
+    name: $CI_COMMIT_REF_NAME #branch
+    kubernetes:
+      namespace: $CI_COMMIT_REF_NAME

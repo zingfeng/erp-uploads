@@ -56,13 +56,14 @@ return [
         ],
 
         's3' => [
-            'driver' => 's3',
-            'key' => 'HPMOXAJHXBNEKLRRAVYU',
-            'secret' => '9rBGQ73zccwLp28GHyqA9vrOc2guDypkj9D/cWY2fmk',
-            'region' => 'sgp1',
-            'bucket' => 'imapcdn',
-            'url' => 'https://imapcdn.sgp1.digitaloceanspaces.com', // endpoint
-            'endpoint' => 'https://sgp1.digitaloceanspaces.com', // endpoint
+            'driver' => env('S3_DRIVER','s3'),
+            'key' => env('S3_KEY','HPMOXAJHXBNEKLRRAVYU'),
+            'secret' => env('S3_SECRET','9rBGQ73zccwLp28GHyqA9vrOc2guDypkj9D/cWY2fmk'),
+            'region' =>  env('S3_REGION','sgp1'),
+            'bucket' => env('S3_BUCKET','imapcdn'),
+            'url' =>  env('S3_URL','https://imapcdn.sgp1.digitaloceanspaces.com'),
+            'endpoint' => env('S3_ENDPOINT','https://sgp1.digitaloceanspaces.com'), // endpoint
+            'root' => env('S3_ROOT','uploads'), // endpoint
         ],
 
         'uploads' => [
