@@ -56,7 +56,7 @@ class FileController extends Controller
                     if ( isset($params['tmp']) && ($params['tmp'] == 'false') ) {
                         // Put vào folder Upload luôn
                         $content = file_get_contents($file->getRealPath());
-                        $url = 'uploads'.('/' . date('Y') . '/' . date('m') . '/' . date('d')).'/'.$new_name;
+                        $url = config('filesystems.disks.s3.root') .('/' . date('Y') . '/' . date('m') . '/' . date('d')).'/'.$new_name;
                         Storage::disk(config('filesystems.cloud'))->put($url, $content,'public');
                         return response()->json([
                             'status' => 'success',
@@ -69,7 +69,7 @@ class FileController extends Controller
                         Storage::disk(config('filesystems.cloud'))->put('tmp/'.$new_name, $content,'public');
 
                         // Dạng return này liên quan đến thư viện upload phía Client - filepond
-                        echo 'uploads'.('/' . date('Y') . '/' . date('m') . '/' . date('d')).'/'.$new_name;
+                        echo config('filesystems.disks.s3.root') .('/' . date('Y') . '/' . date('m') . '/' . date('d')).'/'.$new_name;
                         exit;
                     }
 
@@ -121,6 +121,6 @@ class FileController extends Controller
      * Xóa file trong folder TMP
      */
     public function revert(){
-        Storage::disk(config('filesystems.cloud'))->delete(str_replace("uploads/","tmp/",file_get_contents('php://input')));
+        Storage::disk(config('filesystems.cloud'))->delete(str_replace(config('filesystems.disks.s3.root') ."/","tmp/",file_get_contents('php://input')));
     }
 }
